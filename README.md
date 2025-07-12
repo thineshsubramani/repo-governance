@@ -39,6 +39,9 @@ End result: no drift, no outdated workflows, built-in security scanning everywhe
 * Docker : for consistent builds across CI/CD (coming soon)
 * Composite GitHub Action : native drop-in for GitHub workflows (planned)
 
+---
+
+## Next Stages
 
 
 
