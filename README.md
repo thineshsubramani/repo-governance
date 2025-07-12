@@ -15,10 +15,10 @@ End result: no drift, no outdated workflows, built-in security scanning everywhe
 
 ## Key design goals
 
-✅ **Declarative YAML config** : describe your governance once, apply to many repos
-✅ **CI/CD agnostic** : works with GitHub Actions, GitLab CI, Jenkins, or even cron
-✅ **Security & compliance first** : keep branch rules, CODEOWNERS, and workflows aligned
-✅ **No vendor lock-in** : Python + REST, works anywhere your repos live
+**Declarative YAML config** : describe your governance once, apply to many repos
+**CI/CD agnostic** : works with GitHub Actions, GitLab CI, Jenkins, or even cron
+**Security & compliance first** : keep branch rules, CODEOWNERS, and workflows aligned
+**No vendor lock-in** : Python + REST, works anywhere your repos live
 
 ---
 
