@@ -7,7 +7,7 @@ from discover.repos import discover_repositories
 from discover.metadata import enrich_and_filter_repos_by_date
 from tasks.topics import add_topic_to_repos, remove_topic_from_repos
 from tasks.workflows import ensure_workflow_in_repos
-from assets import workflow_content  # Assuming this is the correct import path for your workflow content
+from assets import workflow_content  
 
 def main():
     client = github_client()
