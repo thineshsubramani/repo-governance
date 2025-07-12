@@ -1,10 +1,13 @@
 import datetime
+from assets.workflow_content import get_workflow_content
 from core.auth import github_client
 from core.parser import load_yaml_config
 from filter.filter import filter_repos
 from discover.repos import discover_repositories
 from discover.metadata import enrich_and_filter_repos_by_date
 from tasks.topics import add_topic_to_repos, remove_topic_from_repos
+from tasks.workflows import ensure_workflow_in_repos
+from assets import workflow_content  # Assuming this is the correct import path for your workflow content
 
 def main():
     client = github_client()
@@ -42,6 +45,9 @@ def main():
         descending=True
     )
     print(enriched)
+    workflow_content = get_workflow_content()
+    ensure_workflow_in_repos(client, "hardening.yml", workflow_content, enriched)
+
 
     # print("\n== Adding topic to filtered repos ==")
     # add_topic_to_repos(
