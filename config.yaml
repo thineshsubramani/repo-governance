@@ -1,0 +1,48 @@
+repos:
+  include:
+    - personal-*             # name starts with personal-
+    - homelab*
+  exclude:
+    - test*                  # skip repos like test-api etc.
+    - temp-*
+
+topics:
+  - "infra"
+#   - "infra*"
+#   - "homelab"
+
+tags:
+  - "v0.*"
+  - "release-*"
+
+labels:
+  - "infra-managed"
+  - "bug*"
+
+ownership:
+  - "owned"                  # could be "owned", "forked", "shared"
+
+tasks:
+  topics:
+    add:
+      - "awesome-sre"
+    remove:
+      - "certified"
+
+  labels:
+    add:
+      - name: "infra-managed"
+        color: "00ff00"
+        description: "Managed by repo-governor"
+    remove:
+      - "infra-managed"
+
+  tags:
+    add:
+      - name: "v0.0.1"
+        commit: "HEAD"
+    remove:
+      - "v0.0.1"
+    rename:
+      - old: "v0.0.1"
+        new: "v0.0.2"
