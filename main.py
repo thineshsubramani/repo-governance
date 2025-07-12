@@ -16,12 +16,12 @@ def main():
 
     print("\n== Filtering repos based on ownership only ==")
 
-    my_owners = ['thineshsubramani', 'DevOpsInsightLab']
-
+    my_owners = config.get('ownership', []) if config else []
+    print(my_owners)
     filtered_repo_info = filter_repos(
-    repo_info,
-    my_owners=my_owners,
-    keep_fields=['object', 'meta']
+        repo_info,
+        my_owners=my_owners,
+        keep_fields=['object', 'meta']
     )
     # print(filtered_repo_info)
     print("\n== Adding topic to filtered repos ==")
@@ -33,7 +33,7 @@ def main():
 
     # remove_topic_from_repos(
     #     client,
-    #     topic="awesome-sre",
+    #     topic="certified",
     #     repos=filtered_repo_info
     # )
 

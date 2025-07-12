@@ -20,7 +20,8 @@ labels:
   - "bug*"
 
 ownership:
-  - "owned"                  # could be "owned", "forked", "shared"
+  - "thineshsubramani"          
+  # - "DevOpsInsightLab"
 
 tasks:
   topics:
