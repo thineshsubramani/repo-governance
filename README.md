@@ -7,7 +7,7 @@ Built for real engineering teams to standardize and secure hundreds of repos : f
 
 ## Why I built this
 
-I wanted every repo to stay consistent, secure, and production-ready — without manual fixes.
+I wanted every repo to stay consistent, secure, and production-ready, without manual fixes.
 When `config.yaml` or standard workflows change, updates roll out automatically across all repos.
 End result: no drift, no outdated workflows, built-in security scanning everywhere.
 
@@ -96,11 +96,11 @@ End result: no drift, no outdated workflows, built-in security scanning everywhe
     - Scales (single session O(1))
 
     - Saves rate limit
-    
+
 ---
 ## Comments
 I attached the repo object in the dict so I can reuse the same connection for filtering and future tasks.
 Basically, I get all repo objects once (using a single API call) and store them in memory.
-Then, when I need to get topics, tags, or update workflows, I call methods on those existing objects — this keeps using the same authenticated HTTP session + TCP socket, so it avoids opening new connections.
+Then, when I need to get topics, tags, or update workflows, I call methods on those existing objects, this keeps using the same authenticated HTTP session + TCP socket, so it avoids opening new connections.
 This helps reduce extra API calls and latency.
 Still figuring out better ways to optimize and keep it fast, but right now this design already avoids a lot of repeated connects and keeps everything in-memory for batch processing.
