@@ -41,7 +41,61 @@ End result: no drift, no outdated workflows, built-in security scanning everywhe
 
 ---
 
-## Next Stages
+## Architecture
+
+```
++-----------------------------+
+| 1️⃣ Init GitHub Client      |
+| github = Github(token)      |
+| -------------------------  |
+| Holds:                     |
+| - HTTPS session            |
+| - TCP socket (keep-alive)  |
++-------------+---------------+
+              |
+              v
++--------------------------------------------------+
+| 2️⃣ Discover repos                               |
+| repos = github.get_repo("org/repo1")             |
+| ------------------------------------------------ |
+| repos dict built like:                           |
+| {                                                |
+|   "org/repo1": {                                 |
+|      "object": repo_obj1                         |
+|   }                                              |
+| }                                                |
++-------------+------------------------------------+
+              |
+              v
++--------------------------------------------------+
+| 3️⃣ Inside repo_obj1:                            |
+| PyGithub structure:                              |
+| ------------------------------------------------ |
+| repo_obj1.client   ---> points to same Github()  |
+| repo_obj1.url      ---> repo REST URL            |
+| repo_obj1._request ---> uses github._Github__requester |
+|                                                      |
+| So every call like:                                   |
+|   repo_obj1.get_topics()                              |
+|   repo_obj1.get_tags()                                |
+|   repo_obj1.edit()                                    |
+| all go back through the SAME client + TCP conn        |
++--------------------------------------------------+
+```
+
+* Github() creates a single requests.Session → holds TCP socket open
+
+* repo_obj doesn’t duplicate connection; it keeps a pointer back to that session
+
+* When you call .get_topics(), it builds REST URL & uses the same authenticated HTTP session → no new handshake
+
+* Result:
+
+    - Faster (no handshake / TLS per call)
+
+    - Scales (single session O(1))
+
+    - Saves rate limit
 
 
 
