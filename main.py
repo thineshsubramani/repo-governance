@@ -38,8 +38,8 @@ def main():
     )
 
     # Apply the workflow if not present
-    workflow_content = get_workflow_content()
-    ensure_workflow_in_repos(client, "hardening.yml", workflow_content, enriched)
+    # workflow_content = get_workflow_content()
+    # ensure_workflow_in_repos(client, "hardening.yml", workflow_content, enriched)
 
     # Update audit report
     print("\n== Updating audit report README ==")
