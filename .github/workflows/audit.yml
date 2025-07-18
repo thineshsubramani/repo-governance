@@ -1,0 +1,23 @@
+name: Repo Audit Runner
+
+on:
+  schedule:
+    - cron: "0 2 * * *"  # Runs daily at 2:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  run-audit:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run audit script
+        run: python3 main.py
