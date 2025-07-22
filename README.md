@@ -1,4 +1,4 @@
-# repo-governor
+# repo-governance
 
 **Governance-as-Code toolkit** to discover, validate, and enforce tags, workflows, README standards, and policies across all your GitHub repos.
 Built for real engineering teams to standardize and secure hundreds of repos : fast, automated, and declarative.
