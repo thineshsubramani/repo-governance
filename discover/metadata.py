@@ -2,21 +2,15 @@ from core.api_stats import measure_api_stats
 from datetime import datetime
 
 @measure_api_stats
-def enrich_and_filter_repos_by_date(client, repos, 
-                                    filter_by=None, # "created" or "last_commit"
-                                    start_date=None, end_date=None, # datetime
-                                    sort_by=None, # "created" or "last_commit"
-                                    descending=True):
+def enrich_and_filter_repos_by_date(client, repo_info, filter_by, start_date, sort_by, descending):
     """
-    Enrich repos with created & last_commit date.
-    Then:
-      - Filter: keep only repos within date range (by filter_by)
-      - Sort: by created_date or last_commit_date
+    Enrich repos with commit date and filter/sort.
+    repo_info: dict of {repo_full_name: {"meta": ...}}
     """
     enriched = {}
-
-    for repo_name, data in repos.items():
-        repo = data["object"]
+    for repo_full_name, data in repo_info.items():
+        # Fetch the repo object using the client
+        repo = client.get_repo(repo_full_name)
         created_date = repo.created_at
         default_branch = repo.default_branch
         last_commit_date = None
@@ -27,22 +21,20 @@ def enrich_and_filter_repos_by_date(client, repos,
         except Exception as e:
             print(f"[-] Couldn’t get last commit for {repo.full_name}: {e}")
 
-        enriched[repo_name] = {
+        enriched[repo_full_name] = {
             **data,
             "created_date": created_date,
             "last_commit_date": last_commit_date
         }
 
     # Filter by date range
-    if filter_by in ("created", "last_commit") and (start_date or end_date):
+    if filter_by in ("created", "last_commit") and (start_date):
         key = f"{filter_by}_date"
         filtered = {}
         for name, item in enriched.items():
             dt = item.get(key)
             if dt:
-                if start_date and dt < start_date:
-                    continue
-                if end_date and dt > end_date:
+                if dt < start_date:
                     continue
                 filtered[name] = item
         enriched = filtered

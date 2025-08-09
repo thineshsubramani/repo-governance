@@ -37,9 +37,13 @@ def main():
         descending=True
     )
 
-    # Apply the workflow if not present
-    # workflow_content = get_workflow_content()
-    # ensure_workflow_in_repos(client, "hardening.yml", workflow_content, enriched)
+    # When passing to tasks, pass only the list of repo full names or meta dicts
+    repo_full_names = list(enriched.keys())
+
+    # Example: in ensure_workflow_in_repos, fetch repo object inside the function
+    # ensure_workflow_in_repos(client, "hardening.yml", workflow_content, repo_full_names)
+
+    # Similarly for audit, topics, etc.
 
     # Update audit report
     print("\n== Updating audit report README ==")

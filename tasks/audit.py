@@ -28,13 +28,14 @@ def get_repo_data(repo, workflow_name):
 
 def update_audit_readme(client, audit_repo_name, workflow_name, repos):
     """
-    Generate or update audit report README with a table of all repos.
+    Update the audit report README with workflow status for each repo.
+    repos: dict of {repo_full_name: {meta, ...}}
     """
     audit_repo = client.get_repo(audit_repo_name)
 
     repo_data = []
-    for repo_name, data in repos.items():
-        repo = data["object"]
+    for repo_full_name, data in repos.items():
+        repo = client.get_repo(repo_full_name)  # ← FIXED: fetch repo object here
         info = get_repo_data(repo, workflow_name)
         repo_data.append(info)
 

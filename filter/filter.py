@@ -1,21 +1,10 @@
-def filter_repos(repo_info, my_owners, config=None, keep_fields=None):
+def filter_repos(repo_info, my_owners=None, keep_fields=None):
     """
-    Filter repos: keep only repos owned by config.ownership and not forked.
-    keep_fields: list of fields to keep, e.g. ['object', 'meta']
+    Filter repos by owner and return a dict of {repo_full_name: {meta, ...}}
     """
     filtered = {}
-
     for repo_full_name, data in repo_info.items():
-        meta = data.get('meta', {})
-        owner = meta.get('owner')
-        is_fork = meta.get('fork', False)
-
-        if owner in my_owners and not is_fork:
-            # keep only needed fields
-            if keep_fields:
-                filtered_data = {k: v for k, v in data.items() if k in keep_fields}
-            else:
-                filtered_data = data
-            filtered[repo_full_name] = filtered_data
-
+        owner = data["meta"]["owner"]
+        if my_owners is None or owner in my_owners:
+            filtered[repo_full_name] = {k: v for k, v in data.items() if not keep_fields or k in keep_fields}
     return filtered

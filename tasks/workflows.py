@@ -11,12 +11,12 @@ def has_workflow(repo, filename):
         raise
 
 @measure_api_stats
-def ensure_workflow_in_repos(client, workflow_name, workflow_content, repos):
+def ensure_workflow_in_repos(client, workflow_name, workflow_content, repo_full_names):
     """
     Add workflow to repos if missing (disabled by default).
     """
-    for repo_name, data in repos.items():
-        repo = data["object"]
+    for repo_full_name in repo_full_names:
+        repo = client.get_repo(repo_full_name)
         if not has_workflow(repo, workflow_name):
             repo.create_file(
                 path=f".github/workflows/{workflow_name}",

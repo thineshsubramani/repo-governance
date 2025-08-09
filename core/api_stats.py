@@ -2,51 +2,62 @@ import time
 from functools import wraps
 from collections import defaultdict
 
+def is_pygithub_obj(obj):
+    return hasattr(obj, '__class__') and obj.__class__.__module__.startswith('github.')
+
 class CountingProxy:
     def __init__(self, obj, stats):
-        self._obj = obj
-        self._stats = stats
+        object.__setattr__(self, '_obj', obj)
+        object.__setattr__(self, '_stats', stats)
 
-    def __getattr__(self, attr):
-        orig_attr = getattr(self._obj, attr)
+    def __getattribute__(self, attr):
+        _obj = object.__getattribute__(self, '_obj')
+        _stats = object.__getattribute__(self, '_stats')
+        orig_attr = getattr(_obj, attr)
 
         if callable(orig_attr):
             def hooked(*args, **kwargs):
-                self._stats['total_calls'] += 1
-                key = f"{type(self._obj).__name__}.{attr}"
-                self._stats['api_counter'][key] += 1
+                _stats['total_calls'] += 1
+                key = f"{type(_obj).__name__}.{attr}"
+                _stats['api_counter'][key] += 1
 
                 result = orig_attr(*args, **kwargs)
-
-                # If result is PyGithub object → wrap
-                if hasattr(result, '__class__') and result.__class__.__module__.startswith('github.'):
-                    return CountingProxy(result, self._stats)
-
-                # If result is list/tuple of PyGithub objects → wrap each
-                if isinstance(result, (list, tuple)):
-                    if len(result) > 0 and hasattr(result[0], '__class__') and result[0].__class__.__module__.startswith('github.'):
-                        return [CountingProxy(item, self._stats) for item in result]
-
-                return result
+                return wrap_result(result, _stats)
             return hooked
         else:
+            # For property access, wrap if PyGithub object
+            if is_pygithub_obj(orig_attr):
+                return CountingProxy(orig_attr, _stats)
             return orig_attr
 
     def __iter__(self):
-        for item in self._obj:
-            if hasattr(item, '__class__') and item.__class__.__module__.startswith('github.'):
-                yield CountingProxy(item, self._stats)
-            else:
-                yield item
+        _obj = object.__getattribute__(self, '_obj')
+        _stats = object.__getattribute__(self, '_stats')
+        for item in _obj:
+            yield wrap_result(item, _stats)
 
     def __len__(self):
-        """Pass length calls to wrapped object if it supports it."""
-        return len(self._obj)
+        _obj = object.__getattribute__(self, '_obj')
+        return len(_obj)
 
     def __getitem__(self, item):
-        """Support indexing."""
-        return self._obj[item]
+        _obj = object.__getattribute__(self, '_obj')
+        _stats = object.__getattribute__(self, '_stats')
+        result = _obj[item]
+        return wrap_result(result, _stats)
 
+def wrap_result(result, stats):
+    if is_pygithub_obj(result):
+        return CountingProxy(result, stats)
+    if isinstance(result, (list, tuple)):
+        return type(result)(wrap_result(item, stats) for item in result)
+    if hasattr(result, '__iter__') and not isinstance(result, (str, bytes, dict)):
+        # For generators/iterators
+        try:
+            return (wrap_result(item, stats) for item in result)
+        except Exception:
+            return result
+    return result
 
 def measure_api_stats(func):
     """
