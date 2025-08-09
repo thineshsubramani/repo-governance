@@ -20,3 +20,13 @@ def github_client(token: str = None):
     
     # TODO: add logging if needed
     return Github(token)
+
+def get_github_token():
+    """
+    Return GitHub token from environment variable GITHUB_TOKEN.
+    """
+    import os
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        raise ValueError("GITHUB_TOKEN environment variable not set.")
+    return token

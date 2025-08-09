@@ -1,21 +1,26 @@
 import datetime
 from assets.workflow_content import get_workflow_content
-from core.auth import github_client
+from core.auth import github_client, get_github_token  # Add get_github_token
 from core.parser import load_yaml_config
 from filter.filter import filter_repos
-from discover.repos import discover_repositories
+from discover.repos import discover_repositories, discover_repositories_graphql
 from discover.metadata import enrich_and_filter_repos_by_date
 from tasks.workflows import ensure_workflow_in_repos
 from tasks.audit import update_audit_readme  # ← Make sure this is placed correctly
 
 def main():
     client = github_client()
+    token = get_github_token()  # Implement this to read from env/config
+    use_graphql = True  # set this to False to use REST
 
     print("\n== Loading config ==")
     config = load_yaml_config("config.yaml")
 
     print("\n== Discovering all repositories ==")
-    repo_info = discover_repositories(client)
+    if use_graphql:
+        repo_info = discover_repositories_graphql(client, token)
+    else:
+        repo_info = discover_repositories(client)
     print(f"Total repos: {len(repo_info)}")
 
     print("\n== Filtering repos based on ownership only ==")
