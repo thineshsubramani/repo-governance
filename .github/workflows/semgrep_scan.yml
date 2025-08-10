@@ -23,7 +23,7 @@ jobs:
 
   scan:
     needs: get-repos
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -44,13 +44,15 @@ jobs:
       - name: Run Semgrep
         run: |
           cd repo
-          semgrep --config auto --json > ../${{ matrix.repo//\//_ }}.json || true
+          safe_repo_name=$(echo "${{ matrix.repo }}" | tr '/' '_')
+          semgrep --config auto --json > ../"$safe_repo_name".json || true
 
       - name: Upload scan result
         uses: actions/upload-artifact@v4
         with:
           name: semgrep-results
-          path: ${{ matrix.repo//\//_ }}.json
+          path: "*.json"
+
 
   aggregate:
     needs: scan
