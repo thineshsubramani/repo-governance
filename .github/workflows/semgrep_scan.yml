@@ -16,10 +16,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
-            repos=$(curl -s -H "Authorization: token $GH_TOKEN" \
-              "https://api.github.com/users/thineshsubramani/repos?per_page=100" \
-              | jq -r '.[].full_name' | jq -R -s -c 'split("\n")[:-1]')
-            echo "repos=$repos" >> $GITHUB_OUTPUT
+          repos=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/users/thineshsubramani/repos?per_page=100" \
+            | jq -r '.[].full_name' | jq -R -s -c 'split("\n")[:-1]')
+          echo "repos=$repos" >> $GITHUB_OUTPUT
 
   scan:
     needs: get-repos
@@ -28,7 +28,6 @@ jobs:
       fail-fast: false
       matrix:
         repo: ${{ fromJson(needs.get-repos.outputs.repos) }}
-        
     steps:
       - name: Shallow sparse checkout
         run: |
@@ -39,63 +38,42 @@ jobs:
           echo "src/" > .git/info/sparse-checkout
           git sparse-checkout set src/
 
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'  # latest Python 3
-      
+          python-version: '3.x'
+
       - name: Install Semgrep
         run: |
           python -m pip install --upgrade pip
           pip install semgrep
 
-
-      - name: Run Semgrep
+      - name: Run Semgrep scan
         run: |
-          cd repo
           safe_repo_name=$(echo "${{ matrix.repo }}" | tr '/' '_')
-          semgrep --config auto --json > ../"$safe_repo_name".json || true
+          cd repo
+          semgrep --config auto --json > ../semgrep-results/$safe_repo_name.json || true
 
-      - name: Upload scan result
-        run: |
-          safe_name=$(echo "${{ matrix.repo }}" | tr '/' '_')
-          echo "safe_name=$safe_name" >> $GITHUB_ENV
-      
-      - name: Upload scan result artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-results-${{ env.safe_name }}
-          path: "*.json"
-
-  aggregate:
+  upload-results:
     needs: scan
     runs-on: self-hosted
-    env:
-      REPOS: ${{ needs.get-repos.outputs.repos }}
     steps:
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-  
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.REPO_TOKEN }}
-        run: |
-          echo $GH_TOKEN | gh auth login --with-token
-  
-      - name: Download all artifacts
-        run: |
-          mkdir -p scan_reports
-          # convert JSON array to bash array
-          repos=$(echo "$REPOS" | jq -r '.[]')
-          for repo in $repos; do
-            safe_name=$(echo "$repo" | tr '/' '_')
-            echo "Downloading artifact semgrep-results-$safe_name"
-            gh run download-artifact --name "semgrep-results-$safe_name" --dir scan_reports || echo "No artifact for $repo"
-          done
-  
+      - name: Upload combined scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep-results/*.json
+
+  aggregate:
+    needs: upload-results
+    runs-on: self-hosted
+    steps:
+      - name: Download all scan results
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-results
+          path: scan_reports
+
       - name: Generate README.md
         run: |
           echo "# Semgrep Audit Report" > scan_reports/README.md
@@ -106,7 +84,7 @@ jobs:
             count=$(jq '.results | length' "$file")
             echo "- **$repo** → $count findings" >> scan_reports/README.md
           done
-  
+
       - name: Commit and push report
         run: |
           git config --global user.email "actions@github.com"
