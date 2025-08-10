@@ -38,8 +38,16 @@ jobs:
           echo "src/" >> .git/info/sparse-checkout
           git pull --depth=1 origin main || git pull --depth=1 origin master
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'  # latest Python 3
+      
       - name: Install Semgrep
-        run: pip install semgrep
+        run: |
+          python -m pip install --upgrade pip
+          pip install semgrep
+
 
       - name: Run Semgrep
         run: |
