@@ -58,9 +58,14 @@ jobs:
           semgrep --config auto --json > ../"$safe_repo_name".json || true
 
       - name: Upload scan result
+        run: |
+          safe_name=$(echo "${{ matrix.repo }}" | tr '/' '_')
+          echo "safe_name=$safe_name" >> $GITHUB_ENV
+      
+      - name: Upload scan result artifact
         uses: actions/upload-artifact@v4
         with:
-          name: semgrep-results
+          name: semgrep-results-${{ env.safe_name }}
           path: "*.json"
 
   aggregate:
