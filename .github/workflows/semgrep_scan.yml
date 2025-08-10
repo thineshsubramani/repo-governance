@@ -16,10 +16,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
-          curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/users/thineshsubramani/repos?per_page=100" \
-            | jq -r '.[].full_name' | jq -R -s -c 'split("\n")[:-1]')
-          echo "repos=$repos" >> $GITHUB_OUTPUT
+            repos=$(curl -s -H "Authorization: token $GH_TOKEN" \
+              "https://api.github.com/users/thineshsubramani/repos?per_page=100" \
+              | jq -r '.[].full_name' | jq -R -s -c 'split("\n")[:-1]')
+            echo "repos=$repos" >> $GITHUB_OUTPUT
 
   scan:
     needs: get-repos
