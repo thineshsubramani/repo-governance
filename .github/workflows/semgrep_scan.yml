@@ -1,0 +1,86 @@
+name: org-semgrep-parallel-scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"  # Weekly
+
+jobs:
+  get-repos:
+    runs-on: self-hosted
+    outputs:
+      repos: ${{ steps.get.outputs.repos }}
+    steps:
+      - name: Get repo list
+        id: get
+        env:
+          GH_TOKEN: ${{ secrets.REPO_TOKEN }}
+        run: |
+          repos=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/orgs/<YOUR_ORG>/repos?per_page=100" \
+            | jq -r '.[].full_name' | jq -R -s -c 'split("\n")[:-1]')
+          echo "repos=$repos" >> $GITHUB_OUTPUT
+
+  scan:
+    needs: get-repos
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: ${{ fromJson(needs.get-repos.outputs.repos) }}
+    steps:
+      - name: Shallow sparse checkout
+        run: |
+          git init repo
+          cd repo
+          git remote add origin https://github.com/${{ matrix.repo }}
+          git config core.sparseCheckout true
+          echo "src/" >> .git/info/sparse-checkout
+          git pull --depth=1 origin main || git pull --depth=1 origin master
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep
+        run: |
+          cd repo
+          semgrep --config auto --json > ../${{ matrix.repo//\//_ }}.json || true
+
+      - name: Upload scan result
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: ${{ matrix.repo//\//_ }}.json
+
+  aggregate:
+    needs: scan
+    runs-on: self-hosted
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-results
+          path: scan_reports
+
+      - name: Generate README.md
+        run: |
+          echo "# Semgrep Audit Report" > scan_reports/README.md
+          echo "Generated on $(date -u)" >> scan_reports/README.md
+          echo "" >> scan_reports/README.md
+          for file in scan_reports/*.json; do
+            repo=$(basename "$file" .json | sed 's/_/\//')
+            count=$(jq '.results | length' "$file")
+            echo "- **$repo** → $count findings" >> scan_reports/README.md
+          done
+
+      - name: Commit and push report
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git fetch origin main
+          git checkout main
+          mkdir -p scan_reports
+          cp -r scan_reports/* ./scan_reports/
+          git add scan_reports
+          git commit -m "Update Semgrep report [skip ci]" || echo "No changes"
+          git push
