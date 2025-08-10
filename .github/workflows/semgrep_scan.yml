@@ -28,15 +28,17 @@ jobs:
       fail-fast: false
       matrix:
         repo: ${{ fromJson(needs.get-repos.outputs.repos) }}
+        
     steps:
       - name: Shallow sparse checkout
         run: |
-          git init repo
+          rm -rf repo
+          git clone --depth=1 --filter=blob:none https://github.com/${{ matrix.repo }} repo
           cd repo
-          git remote add origin https://github.com/${{ matrix.repo }}
-          git config core.sparseCheckout true
-          echo "src/" >> .git/info/sparse-checkout
-          git pull --depth=1 origin main || git pull --depth=1 origin master
+          git sparse-checkout init --cone
+          echo "src/" > .git/info/sparse-checkout
+          git sparse-checkout set src/
+
 
       - name: Setup Python
         uses: actions/setup-python@v4
