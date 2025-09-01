@@ -1,0 +1,22 @@
+name: Echo Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      alert_name:
+        description: "Alert name from Grafana"
+        required: true
+        type: string
+      status:
+        description: "Alert status (firing/resolved)"
+        required: true
+        type: string
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Grafana payload
+        run: |
+          echo "Alert: ${{ github.event.inputs.alert_name }}"
+          echo "Status: ${{ github.event.inputs.status }}"
